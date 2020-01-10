@@ -6,12 +6,9 @@ EXTENDS Naturals, FiniteSets, Sequences, TLC
 \* The set of server IDs
 CONSTANTS Server
 
-\* The set of requests that can go into the log
-CONSTANTS Value
-
 \* Server states.
 \* Candidate is not used, but this is fine.
-CONSTANTS Follower, Candidate, Leader
+CONSTANTS Follower, Leader
 
 \* A reserved value.
 CONSTANTS Nil
@@ -57,16 +54,6 @@ Min(s) == CHOOSE x \in s : \A y \in s : x <= y
 \* Return the maximum value from a set, or undefined if the set is empty.
 Max(s) == CHOOSE x \in s : \A y \in s : x >= y
 
-----
-\* Define initial values for all variables
-
-InitServerVars == /\ globalCurrentTerm = 1
-                  /\ state             = [i \in Server |-> Follower]
-InitLogVars == /\ log          = [i \in Server |-> << >>]
-Init == /\ InitServerVars
-        /\ InitLogVars
-
-----
 \* Message handlers
 \* i = recipient, j = sender, m = message
 
@@ -131,21 +118,26 @@ BecomePrimaryByMagic(i) ==
        /\ UNCHANGED <<logVars>>
 
 \* Leader i receives a client request to add v to the log.
-ClientWrite(i, v) ==
+ClientWrite(i) ==
     /\ state[i] = Leader
-    /\ LET entry == [term  |-> globalCurrentTerm,
-                     value |-> v]
+    /\ LET entry == [term  |-> globalCurrentTerm]
            newLog == Append(log[i], entry)
        IN  log' = [log EXCEPT ![i] = newLog]
     /\ UNCHANGED <<serverVars>>
 
 ----
+
+\* Define initial values for all variables
+Init == /\ globalCurrentTerm = 0
+        /\ state             = [i \in Server |-> Follower]
+        /\ log               = [i \in Server |-> << >>]
+
 \* Defines how the variables may transition.
 Next == /\
            \/ \E i,j \in Server : AppendOplog(i, j)
            \/ \E i,j \in Server : RollbackOplog(i, j)
            \/ \E i \in Server : BecomePrimaryByMagic(i)
-           \/ \E i \in Server, v \in Value : ClientWrite(i, v)
+           \/ \E i \in Server : ClientWrite(i)
 
 \* The specification must start with the initial state and transition according
 \* to Next.
