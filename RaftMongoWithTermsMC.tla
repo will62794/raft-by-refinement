@@ -10,17 +10,18 @@ StateConstraint == \A s \in Server :
 
 ServerSymmetry == Permutations(Server)
 
-\* TODO: Define refinement mapping.
+\* If you're the highest leader, you are the "real" leader.
+MaxLeader == [s \in Server |-> IF /\ currentTerm[s] = Max(Range(currentTerm))
+                                   /\ state[s] = Leader 
+                                   THEN Leader ELSE Follower]
+\* The highest of all terms.
+MaxGlobalTerm == Max(Range(currentTerm))
+
+\* Define refinement mapping.
 RM == INSTANCE RaftMongo WITH Leader <- Leader,
                               Follower <- Follower,
-                              globalCurrentTerm <- Max(Range(currentTerm)),
-                              state <- [s \in Server |-> 
-                                            \* If you're the highest leader, you are the "real" leader.
-                                            IF /\ currentTerm[s] = Max(Range(currentTerm))
-                                               /\ state[s] = Leader 
-                                            THEN Leader
-                                            ELSE Follower
-                                        ],
+                              globalCurrentTerm <- MaxGlobalTerm,
+                              state <- MaxLeader,
                               log <- log
 
 IsRefinement == RM!Spec
