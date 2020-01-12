@@ -3,7 +3,7 @@
 \* A very abstract specification of a distributed operation log.
 \*
 
-EXTENDS Sequences, Naturals, TLC
+EXTENDS Sequences, Naturals, TLC, FiniteSets
 
 \* The set of all servers.
 CONSTANT Server
@@ -14,7 +14,7 @@ CONSTANT Value
 \* The operation log of each server.
 VARIABLE log
 
-\* The chosen sequence of log entries.
+\* The chosen set of values, each stored as an <<index, value>> tuple.
 VARIABLE chosen
 
 Range(f) == {f[i] : i \in DOMAIN f}
@@ -56,16 +56,14 @@ RemoveEntry(s) ==
 \* A server marks its last log entry as chosen.
 MarkChosen(s) == 
     LET ind == Len(log[s]) IN
-    /\ ind > Len(chosen) \* cannot mark an entry chosen twice. 
     /\ ChosenAt(Len(log[s]))
     \* All logs should have a chosen entry, so any one will do.
-    /\ LET someLog == CHOOSE l \in Range(log) : TRUE IN
-        chosen' = Append(chosen, someLog[ind]) 
+    /\ chosen' = chosen \cup {<<ind, log[s][ind]>>}
     /\ UNCHANGED <<log>>
 
 Init == 
     /\ log = [s \in Server |-> <<>>]
-    /\ chosen = <<>>
+    /\ chosen = {}
  
 WriteNewEntryAction == \E s \in Server : \E v \in Value : WriteNewEntry(s, v)
 AppendEntryAction == \E s,t \in Server : AppendEntry(s, t)
@@ -85,6 +83,9 @@ Liveness ==
     /\ WF_<<log, chosen>>(MarkChosenAction)
 
 Spec == Init /\ [][Next]_<<log, chosen>> /\ Liveness
+
+\* You can never mark two different values as "chosen" for the same log index.
+ChosenSafety == \A i,j \in chosen : i[1] = j[1] => i = j
 
 \*
 \* Model checking stuff.
