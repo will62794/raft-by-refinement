@@ -87,23 +87,4 @@ Spec == Init /\ [][Next]_<<log, chosen>> /\ Liveness
 \* You can never mark two different values as "chosen" for the same log index.
 ChosenSafety == \A i,j \in chosen : i[1] = j[1] => i = j
 
-\*
-\* Model checking stuff.
-\*
-
-CONSTANT MaxLogLen
-
-\* Invariant == \A s \in Server : Len(log[s]) < 2
-Invariant == TRUE
-
-EventuallyChosen == <>(Len(chosen) > 0)
-
-Constraint == \A s \in Server : Len(log[s]) <= MaxLogLen
-
-SomeLog == CHOOSE l \in Range(log) : TRUE
-
-L == INSTANCE Log WITH Value <- Value, log <- chosen
-
-IsRefinement == L!Spec
-
 ====
