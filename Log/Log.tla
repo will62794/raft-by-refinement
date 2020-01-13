@@ -15,10 +15,14 @@ VARIABLE chosen
 \* The log is initially empty.
 Init == chosen = {}
 
-\* Choose some arbitrary next value to write in the log.
-Next == \E v \in Value : chosen' = chosen \cup {<<(Cardinality(chosen)+1), v>>}
+\* Choose some arbitrary next value to write in the log. A value cannot be chosen at an index
+\* that already has a chosen value.
+Next == 
+    \E v \in Value : 
+    \E i \in Nat :
+    /\ ~(\E e \in chosen : e[1] = i)
+    /\ chosen' = chosen \cup {<<i, v>>}
     
 Spec == Init /\ [][Next]_<<chosen>>
 
-Constraint == Cardinality(chosen) < 4
 ====

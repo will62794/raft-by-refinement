@@ -45,3 +45,11 @@ Reproduced a simple case of refinement violation.
 ```
 
 It is the case I expected to see i.e. a leader writing down an entry in a stale term when there is a newer leader. Plan to update the refinement mapping to try to handle this case. TLA+ Toolbox Trace Explorer is very helpful for debugging refinement checking violations.
+
+## January 12, 2020
+
+Exploring a basic refinement example of an operation log in the `Log/` directory. Intention is for `DistLog` to be a refinement of `Log`, a very abstract spec of an operation log where unique values are atomically chosen for each log slot.
+
+Can now "choose" i.e. commit log values out of order in `Log.tla` so I think `DistLog` should be a valid refinement of `Log`.
+
+TODO: I would like to get rid of the separate `MarkChosen` action inside DistLog and just define the current chosen set as a function of the `log` variable. 
