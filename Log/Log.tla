@@ -25,4 +25,7 @@ Next ==
     
 Spec == Init /\ [][Next]_<<chosen>>
 
+\* You can never mark two different values as "chosen" for the same log index.
+ChosenSafety == \A i,j \in chosen : i[1] = j[1] => i = j
+
 ====

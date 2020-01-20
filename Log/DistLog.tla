@@ -51,7 +51,6 @@ WriteNewEntry(s, v) ==
     \* If all servers currently have the same log, then you should pick the 
     \* next value to write down.
     /\ ~ChosenAt(Len(log[s])+1)
-    \* /\ \A i, j \in Server : log[i] = log[j]
     /\ log' = [log EXCEPT ![s] = Append(@, v)]
     /\ UNCHANGED <<chosen>>
 
