@@ -53,3 +53,10 @@ Exploring a basic refinement example of an operation log in the `Log/` directory
 Can now "choose" i.e. commit log values out of order in `Log.tla` so I think `DistLog` should be a valid refinement of `Log`.
 
 TODO: I would like to get rid of the separate `MarkChosen` action inside DistLog and just define the current chosen set as a function of the `log` variable. 
+
+## January 20, 2020
+
+Goals:
+
+ - Demonstrate refinement between very high level consensus log protocol and a lower level distributed, synchronous implementation. 
+ - Demonstrate refinement mapping between distributed, synchronous consensus log and a distributed message passing implemention

@@ -20,14 +20,29 @@ VARIABLE chosen
 Range(f) == {f[i] : i \in DOMAIN f}
 Max(S) == CHOOSE x \in S : \A y \in S : y <= x
 
-\* Is a value chosen at log index 'i'. All nodes must contain the same
+\* The sets of servers that can act to "choose" a value. Once a value exists on 
+\* every server in one of these groups, it is considered "chosen". The simplest 
+\* such group would be all servers, which we use as the default here. Less servers
+\* could be used, though.
+Choosers == { s \in SUBSET Server : Cardinality(s) = Cardinality(Server)}
+
+\* Is a value chosen at log index 'i'. All nodes in some chooser group must contain the same
 \* value at that index in order for it to be considered "chosen".
-ChosenAt(ind) == \A s,t \in Server : 
-    \E i \in DOMAIN log[s] :
-    \E j \in DOMAIN log[t] :
-    /\ i = ind
-    /\ i = j
-    /\ log[s][i] = log[t][j]
+ChosenAt(ind) == 
+    \E chooseGroup \in Choosers :
+    \A s,t \in chooseGroup : 
+        \E i \in DOMAIN log[s] :
+        \E j \in DOMAIN log[t] :
+        /\ i = ind
+        /\ i = j
+        /\ log[s][i] = log[t][j]
+    
+\* The set of all indices/entries in the log of a given server.
+ChosenIndices(s) == { i \in DOMAIN log[s] : ChosenAt(i) } 
+ChosenEntries(s) == { <<i, log[s][i]>> : i \in ChosenIndices(s) } 
+
+\* The set of all chosen log entries.
+AllChosen == UNION { ChosenEntries(s) : s \in Server }
 
 \* Append a new value to your log. You are allowed to append any value
 \* if one is not already "chosen" at the slot you are going to write to i.e.
@@ -53,14 +68,6 @@ RemoveEntry(s) ==
     /\ log' = [log EXCEPT ![s] = SubSeq(@, 1, Len(@)-1)]
     /\ UNCHANGED <<chosen>>
 
-\* A server marks its last log entry as chosen.
-MarkChosen(s) == 
-    LET ind == Len(log[s]) IN
-    /\ ChosenAt(Len(log[s]))
-    \* All logs should have a chosen entry, so any one will do.
-    /\ chosen' = chosen \cup {<<ind, log[s][ind]>>}
-    /\ UNCHANGED <<log>>
-
 Init == 
     /\ log = [s \in Server |-> <<>>]
     /\ chosen = {}
@@ -68,19 +75,16 @@ Init ==
 WriteNewEntryAction == \E s \in Server : \E v \in Value : WriteNewEntry(s, v)
 AppendEntryAction == \E s,t \in Server : AppendEntry(s, t)
 RemoveEntryAction == \E s \in Server : RemoveEntry(s)
-MarkChosenAction == \E s \in Server : MarkChosen(s)
     
 Next == 
     \/ WriteNewEntryAction
     \/ AppendEntryAction
     \/ RemoveEntryAction
-    \/ MarkChosenAction
 
 Liveness == 
     /\ SF_<<log, chosen>>(WriteNewEntryAction)
     /\ SF_<<log, chosen>>(AppendEntryAction)
     /\ WF_<<log, chosen>>(RemoveEntryAction)
-    /\ WF_<<log, chosen>>(MarkChosenAction)
 
 Spec == Init /\ [][Next]_<<log, chosen>> /\ Liveness
 
