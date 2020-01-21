@@ -115,3 +115,6 @@ So, we now have a protocol where we can have multiple, concurrent leaders that c
 
 In a distributed system, how might we do the "asking around" phase? If they ask two separate nodes, `n1` and `n2`, what log entry they have at index `i`, for example, and both nodes respond with some answer, can we be sure that the responses have told us that a value is committed or not? Well, it's possible that at the time `n1` responded it did not have some value, but subsequently received it. Similarly for `n2`. So, we need a better way to check on "committed" values, since messages returned to us might always reflect stale data.
 
+TODO: `DistLog` is not a refinement of `Log` after recent changes since it is possible for `DistLog` to add multiple entries to the "chosen" set in a single step, which `Log` doesn't allow. I could alter `Log` so that it can write down an arbitrary number of log entries in a single action. 
+
+Altered `Log.tla` to be more general so that it can write any number of entries down in its log atomically. This now allows `DistLog` to be a refinement of `Log`. 

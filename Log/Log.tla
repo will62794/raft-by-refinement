@@ -3,7 +3,7 @@
 \* A very abstract specification of an operation log.
 \*
 
-EXTENDS Sequences, Naturals, FiniteSets
+EXTENDS Sequences, Naturals, FiniteSets, TLC
 
 \* The set of all values that can be written in the log.
 CONSTANT Value
@@ -15,13 +15,13 @@ VARIABLE chosen
 \* The log is initially empty.
 Init == chosen = {}
 
-\* Choose some arbitrary next value to write in the log. A value cannot be chosen at an index
-\* that already has a chosen value.
+\* Choose some arbitrary sequence of next values to write in the log. 
+\* A value cannot be chosen at an index that already has a chosen value.
 Next == 
-    \E v \in Value : 
-    \E i \in Nat :
-    /\ ~(\E e \in chosen : e[1] = i)
-    /\ chosen' = chosen \cup {<<i, v>>}
+    \E i,j \in Nat :
+    \E fv \in [i..j -> Value] :
+    /\ \A idx \in i..j : ~(\E e \in chosen : e[1] = idx)
+    /\ chosen' = chosen \cup {<<idx, fv[idx]>> : idx \in i..j}
     
 Spec == Init /\ [][Next]_<<chosen>>
 
