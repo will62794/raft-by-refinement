@@ -81,8 +81,8 @@ Next ==
     \/ RemoveEntryAction
 
 Liveness == 
-    /\ SF_<<log, chosen>>(WriteNewEntryAction)
-    /\ SF_<<log, chosen>>(AppendEntryAction)
+    /\ WF_<<log, chosen>>(WriteNewEntryAction)
+    /\ WF_<<log, chosen>>(AppendEntryAction)
     /\ WF_<<log, chosen>>(RemoveEntryAction)
 
 Spec == Init /\ [][Next]_<<log, chosen>> /\ Liveness
