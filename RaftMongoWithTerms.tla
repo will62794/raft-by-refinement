@@ -42,7 +42,10 @@ serverVars == <<currentTerm, state>>
 \* log entry
 VARIABLE log
 
-vars == <<serverVars, log, immediatelyCommitted>>
+\* Set of entries that can only ever be prefix committed.
+VARIABLE prefixCommitted
+
+vars == <<serverVars, log, immediatelyCommitted, prefixCommitted>>
 
 -------------------------------------------------------------------------------------------
 
@@ -100,7 +103,7 @@ UpdateTerms(i, j) ==
                               ![i] = IF currentTerm[i] < currentTerm[j] THEN Follower ELSE state[i] ]
 
 UpdateTermsOnNodes(i, j) == /\ UpdateTerms(i, j)
-                            /\ UNCHANGED <<log, immediatelyCommitted>>
+                            /\ UNCHANGED <<log, immediatelyCommitted, prefixCommitted>>
 (******************************************************************************)
 (* [ACTION]                                                                   *)
 (*                                                                            *)
@@ -111,7 +114,7 @@ RollbackEntries(i, j) ==
     \* Roll back one log entry.
     /\ log' = [log EXCEPT ![i] = SubSeq(log[i], 1, Len(log[i])-1)]
     /\ UpdateTerms(i, j)
-    /\ UNCHANGED <<immediatelyCommitted>>
+    /\ UNCHANGED <<immediatelyCommitted, prefixCommitted>>
 
 (******************************************************************************)
 (* [ACTION]                                                                   *)
@@ -136,7 +139,7 @@ GetEntries(i, j) ==
               newLog        == Append(log[i], newEntry) IN
               /\ log' = [log EXCEPT ![i] = newLog]
     /\ UpdateTerms(i, j)
-    /\ UNCHANGED <<immediatelyCommitted>>
+    /\ UNCHANGED <<immediatelyCommitted, prefixCommitted>>
 (******************************************************************************)
 (* [ACTION]                                                                   *)
 (*                                                                            *)
@@ -157,7 +160,7 @@ CommitEntry(i) ==
             /\ log[s][ind] = log[i][ind]        \* they have the entry.
             /\ currentTerm[s] = currentTerm[i]  \* they are in the same term.
         /\ immediatelyCommitted' = immediatelyCommitted \cup {[index |->ind, term |-> currentTerm[i]]}
-        /\ UNCHANGED <<serverVars, log>>
+        /\ UNCHANGED <<serverVars, log, prefixCommitted>>
 
 (******************************************************************************)
 (* [ACTION]                                                                   *)
@@ -187,7 +190,7 @@ BecomeLeader(i) ==
                         IF s = i THEN Leader
                         ELSE IF s \in voteQuorum THEN Follower \* All voters should revert to secondary state.
                         ELSE state[s]]
-        /\ UNCHANGED <<log, immediatelyCommitted>>
+        /\ UNCHANGED <<log, immediatelyCommitted, prefixCommitted>>
 
 (******************************************************************************)
 (* [ACTION]                                                                   *)
@@ -200,6 +203,10 @@ ClientRequest(i) ==
     /\ LET entry == [term  |-> currentTerm[i]]
        newLog == Append(log[i], entry) IN
        /\ log' = [log EXCEPT ![i] = newLog]
+    \* If we are writing a log entry in a stale term then record it as a prefix committed entry.
+    /\ prefixCommitted' = IF currentTerm[i] < Max(Range(currentTerm)) 
+                            THEN prefixCommitted \cup {[index |-> (Len(log[i]) + 1), term |-> currentTerm[i]]}
+                            ELSE prefixCommitted
     /\ UNCHANGED <<serverVars, immediatelyCommitted>>
 
 -------------------------------------------------------------------------------------------
@@ -207,6 +214,18 @@ ClientRequest(i) ==
 (**************************************************************************************************)
 (* Miscellaneous properties for exploring/understanding the spec.                                 *)
 (**************************************************************************************************)
+
+\* A single log with the given set of entries i.e. {index |-> ..., term |-> ...} deleted. 
+DeleteEntries(lg, deleteEntries) == 
+    \* Only delete an entry if it exists in log with same (index, term).
+    LET logWithIndices == [i \in DOMAIN lg |-> [index |-> i, term |-> lg[i].term]]
+        ShouldKeep(e) == [index |-> e.index, term |-> e.term] \notin deleteEntries
+        logAfterDeletes == SelectSeq(logWithIndices, ShouldKeep) IN
+        \* Remove indices now that deletion is done.
+        [i \in DOMAIN logAfterDeletes |-> [term |-> logAfterDeletes[i].term]]
+
+\* The logs of all nodes with any prefix committed entries deleted.
+LogsWithoutPrefixCommitted == [i \in DOMAIN log |-> DeleteEntries(log[i], prefixCommitted)]
 
 \* Are there two primaries in the current state.
 TwoPrimaries == \E s, t \in Server : s # t /\ state[s] = Leader /\ state[s] = state[t]
@@ -266,6 +285,7 @@ Init ==
     \* Log variables.
     /\ log          = [i \in Server |-> << >>]
     /\ immediatelyCommitted = {}
+    /\ prefixCommitted = {}
 
 BecomeLeaderAction      ==  \E s \in Server : BecomeLeader(s)
 ClientRequestAction     ==  \E s \in Server : ClientRequest(s)
@@ -293,6 +313,6 @@ Spec == Init /\ [][Next]_vars /\ Liveness
 
 =============================================================================
 \* Modification History
-\* Last modified Mon Dec 02 09:00:03 EST 2019 by williamschultz
+\* Last modified Thu Feb 06 00:21:12 EST 2020 by williamschultz
 \* Last modified Sun Jul 29 20:32:12 EDT 2018 by willyschultz
 \* Created Mon Apr 16 20:56:44 EDT 2018 by willyschultz

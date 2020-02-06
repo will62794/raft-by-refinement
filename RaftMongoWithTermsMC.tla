@@ -22,9 +22,11 @@ RM == INSTANCE RaftMongo WITH Leader <- Leader,
                               Follower <- Follower,
                               globalCurrentTerm <- MaxGlobalTerm,
                               state <- MaxLeader,
-                              log <- log
+                              log <- LogsWithoutPrefixCommitted
 
-Inv == \E s \in Server : Len(log[s]) < 1
+\* Exploratory invariants.
+\* Inv == \E s \in Server : Len(log[s]) < 1
+Inv == Cardinality(prefixCommitted) < 1
 IsRefinement == RM!Spec
 
 =============================================================================

@@ -2,3 +2,4 @@ states/
 *.out
 *.toolbox/
 .DS_Store
+.vscode/
