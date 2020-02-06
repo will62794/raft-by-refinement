@@ -24,6 +24,7 @@ RM == INSTANCE RaftMongo WITH Leader <- Leader,
                               state <- MaxLeader,
                               log <- log
 
+Inv == \E s \in Server : Len(log[s]) < 1
 IsRefinement == RM!Spec
 
 =============================================================================
