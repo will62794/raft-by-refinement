@@ -141,3 +141,7 @@ When trying to define a mapping between 'RaftMongo' and 'RaftMongoWithTerms', wh
 All the events executed by a stale leader can be ordered before the events in the newer term until that node communicates with some other node that knows about the newer term. At this point its subsequent events then need to be ordered after the events of the new term. By the normal rules of Raft, once an old leader communicates with a node in a newer term, though, it will necessarily step down, so after it communicates, it won't be able to write any new log entries in the older term. In normal Raft, it also isn't allowed for a node with a lower term to send a log entry to a node with a higher term. So, logs can't cross term boundaries in that way.
 
 How to "dynamically" re-order events in spec/model in a way that satisfies the partial order of events but might be a different sequence of global states i.e. a different behavior?
+
+## February 9, 2020
+
+Started an attempt to implement refinement mapping based on re-ordering partially ordered events. My first, brute force attempt is to record all events during execution and have a way to virtually "execute" them after some re-ordering of my choosing. The refinement mapping will then do this re-ordering and "virtual execution" to map each state in the lower level spec to a state in the higher level spec.
