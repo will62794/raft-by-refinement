@@ -4,6 +4,7 @@ EXTENDS RaftMongoWithTerms
 \* State Constraint. Used for model checking only.
 CONSTANTS MaxTerm, MaxLogLen
 
+\* Sequence of all events that occur in the system.
 VARIABLE events
 
 MCInit == Init /\ events = <<>>
