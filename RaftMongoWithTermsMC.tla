@@ -23,6 +23,24 @@ MCSpec == MCInit /\ [][MCNext]_<<vars,events>> \*/\ Liveness
 \* Define the refinement mapping.
 \*
 
+\* Produce a state based on the sequence of events that have occurred up to the current state. 
+\* The resulting state should be equivalent to the state we would get by "executing" each event in sequence.
+\*
+\* The variables we need to re-construct.
+\* VARIABLE immediatelyCommitted
+\* VARIABLE currentTerm
+\* VARIABLE state
+\* VARIABLE log
+
+\* Reconstruct the log of each node
+ApplyLogEvents(evs) == <<>>
+    \* Look for all ClientRequest events.
+    \* Look for all GetEntries events.
+    \* Look for all RollbackEntries events.
+
+ApplyEvents(evs) == [log |-> [s \in Server |-> <<>>]]
+    
+
 \* If you're the highest leader, you are the "real" leader.
 MaxLeader == [s \in Server |-> IF /\ currentTerm[s] = Max(Range(currentTerm))
                                    /\ state[s] = Leader 
