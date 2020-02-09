@@ -18,12 +18,6 @@ MCNext ==
     
 MCSpec == MCInit /\ [][MCNext]_<<vars,events>> \*/\ Liveness
 
-StateConstraint == \A s \in Server :
-                    /\ currentTerm[s] <= MaxTerm
-                    /\ Len(log[s]) <= MaxLogLen
-
-ServerSymmetry == Permutations(Server)
-
 \*
 \* Define the refinement mapping.
 \*
@@ -50,5 +44,15 @@ RM == INSTANCE RaftMongo WITH Leader <- Leader,
 \* Inv == Cardinality(prefixCommitted) < 1
 Inv == Len(events) <  6
 IsRefinement == RM!Spec
+
+\*
+\* Model checking helpers.
+\*
+
+StateConstraint == \A s \in Server :
+                    /\ currentTerm[s] <= MaxTerm
+                    /\ Len(log[s]) <= MaxLogLen
+
+ServerSymmetry == Permutations(Server)
 
 =============================================================================
