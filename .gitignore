@@ -3,3 +3,4 @@ states/
 *.toolbox/
 .DS_Store
 .vscode/
+test.cfg
