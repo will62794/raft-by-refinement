@@ -9,13 +9,23 @@ VARIABLE events
 
 MCInit == Init /\ events = <<>>
 
+\* Record pre and post state with each event.
+StateCurr == [log |-> log, currentTerm |-> currentTerm, state |-> state, immediatelyCommitted |-> immediatelyCommitted]
+StateNext == [log |-> log', currentTerm |-> currentTerm', state |-> state', immediatelyCommitted |-> immediatelyCommitted']
+
+BecomeLeaderEvent(s) == [name |-> "BecomeLeader", server |-> s, curr |-> StateCurr, next |-> StateNext]
+ClientRequestEvent(s) == [name |-> "ClientRequest", server |-> s, curr |-> StateCurr, next |-> StateNext]
+GetEntriesEvent(s, t) == [name |-> "GetEntries", from |-> s, to |-> t, curr |-> StateCurr, next |-> StateNext]
+RollbackEntriesEvent(s, t) == [name |-> "RollbackEntries", from |-> s, to |-> t, curr |-> StateCurr, next |-> StateNext]
+CommitEntryEvent(s) == [name |-> "CommitEntry", server |-> s, curr |-> StateCurr, next |-> StateNext]
+
 \* Record all events as they occur.
 MCNext ==
-    \/ \E s \in Server : BecomeLeader(s)            /\ events' = Append(events, <<"BecomeLeader", s>>)
-    \/ \E s \in Server : ClientRequest(s)           /\ events' = Append(events, <<"ClientRequest", s>>)
-    \/ \E s, t \in Server : GetEntries(s, t)        /\ events' = Append(events, <<"GetEntries", s, t>>)
-    \/ \E s, t \in Server : RollbackEntries(s, t)   /\ events' = Append(events, <<"RollbackEntries", s, t>>)
-    \/ \E s \in Server : CommitEntry(s)             /\ events' = Append(events, <<"CommitEntry", s>>)
+    \/ \E s \in Server : BecomeLeader(s)            /\ events' = Append(events, BecomeLeaderEvent(s))
+    \/ \E s \in Server : ClientRequest(s)           /\ events' = Append(events, ClientRequestEvent(s))
+    \/ \E s, t \in Server : GetEntries(s, t)        /\ events' = Append(events, GetEntriesEvent(s, t))
+    \/ \E s, t \in Server : RollbackEntries(s, t)   /\ events' = Append(events, RollbackEntriesEvent(s, t))
+    \/ \E s \in Server : CommitEntry(s)             /\ events' = Append(events, CommitEntryEvent(s))
     
 MCSpec == MCInit /\ [][MCNext]_<<vars,events>> \*/\ Liveness
 
@@ -32,14 +42,34 @@ MCSpec == MCInit /\ [][MCNext]_<<vars,events>> \*/\ Liveness
 \* VARIABLE state
 \* VARIABLE log
 
-\* Reconstruct the log of each node
-ApplyLogEvents(evs) == <<>>
-    \* Look for all ClientRequest events.
-    \* Look for all GetEntries events.
-    \* Look for all RollbackEntries events.
+\* Apply a single event to a given state.
+ApplyEvent(ev, s) == 
+    CASE 
+       ev.name = "ClientRequest" ->
+        LET leaderTerm == s.currentTerm[ev.server] IN
+        [s EXCEPT !.log[ev.server] = <<leaderTerm>>] 
+    [] ev.name = "BecomeLeader" ->
+        \* TODO: Update the terms of all voters in this step, too.
+        [s EXCEPT !.state[ev.server] = <<Leader>>,
+                  !.currentTerm[ev.server] = s.currentTerm[ev.server] + 1 ] 
+    [] OTHER -> s
 
-ApplyEvents(evs) == [log |-> [s \in Server |-> <<>>]]
-    
+\* Reconstruct the state based on a sequence of events.
+RECURSIVE ApplyEvents(_,_)
+ApplyEvents(evs, initState) == 
+    IF Len(evs) = 0 
+    THEN initState 
+    ELSE ApplyEvents(Tail(evs), ApplyEvent(Head(evs), initState))
+
+\* ApplyEvents(evs) == [log |-> [s \in Server |-> <<>>]]
+
+\* Example initial state.
+iState ==  [ currentTerm |-> (0 :> 0 @@ 1 :> 0 @@ 2 :> 0),
+             immediatelyCommitted |-> {},
+             log |-> (0 :> <<>> @@ 1 :> <<>> @@ 2 :> <<>>),
+             state |-> (0 :> Follower @@ 1 :> Follower @@ 2 :> Follower) ]
+
+
 
 \* If you're the highest leader, you are the "real" leader.
 MaxLeader == [s \in Server |-> IF /\ currentTerm[s] = Max(Range(currentTerm))
