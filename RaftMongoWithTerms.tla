@@ -299,7 +299,7 @@ Next ==
     \/ ClientRequestAction
     \/ GetEntriesAction
     \/ RollbackEntriesAction
-    \/ CommitEntryAction
+    \* \/ CommitEntryAction
     \* \/ UpdateTermsAction
 
 Liveness ==
