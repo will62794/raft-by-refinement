@@ -40,9 +40,7 @@ TreeEdge == [
 \* Create an initial branch, starting from an empty log tree.
 InitBranch(newTerm, v) ==
     /\ logTree = {}
-    /\ logTree' = logTree \cup {
-         [log |-> <<<<1, newTerm, v>>>>, children |-> {}, root |-> TRUE]
-       }
+    /\ logTree' = {[log |-> <<<<1, newTerm, v>>>>, children |-> {}, root |-> TRUE]}
     /\ UNCHANGED commitPoint
 
 \* Create a new branch in term 'newTerm', starting from
@@ -50,27 +48,26 @@ InitBranch(newTerm, v) ==
 CreateBranch(parent, newTerm, v) == 
     \* You cannot create a branch that starts in the same term as the starting term
     \* of one of your other child branches.
-    /\ ~\E c \in parent.children : c[2] = newTerm
+    /\ ~(\E c \in parent.children : c[2] = newTerm)
     \* New branches can only be created in terms newer than the parent branch.
     /\ newTerm > parent.log[Len(parent.log)][2]
     \* Append the start of the new branch to the tree.
     /\ (logTree' = (logTree \ {parent}) \cup {
             \* Add the new branch.
-            [log |-> <<<<Len(parent.log) + 1, newTerm>>>>, children |-> {}],
+            [log |-> <<<<parent.log[Len(parent.log)][1] + 1, newTerm, v>>>>, children |-> {}],
             \* Update children pointers of the parent.
-            [parent EXCEPT !.children = @ \cup {<<Len(parent.log)+1, newTerm>>}]
+            [parent EXCEPT !.children = @ \cup {<<parent.log[Len(parent.log)][1] + 1, newTerm>>}]
         })
     /\ UNCHANGED commitPoint
 
-\* Extend the branch in term 'term'. It should be sufficient to uniquely identify
+\* Extend a branch in its own term. Note that it should be sufficient to uniquely identify
 \* a branch by its term, since there should never be sibling branches that end in the
 \* same term.
-ExtendBranch(branch, term, v) == 
-    \* Exists a section of the log that terminates in the given <<index, term>>
-    /\ branch.log[Len(branch.log)][2] = term
-    \* Append a new entry to this branch.
+ExtendBranch(branch, v) == 
+    \* Append a new entry to this branch in the same term.
     /\ logTree' = (logTree \ {branch}) \cup {
-        [branch EXCEPT !.log = Append(branch.log, <<branch.log[Len(branch.log)][1]+1, term, v>>)]
+        [branch EXCEPT !.log = 
+            Append(branch.log, <<branch.log[Len(branch.log)][1]+1, branch.log[Len(branch.log)][2], v>>)]
        }
     /\ UNCHANGED commitPoint
 
@@ -78,7 +75,11 @@ ExtendBranch(branch, term, v) ==
 AdvanceCommitPoint(branch, index, term) ==
     \* The commit point cannot move backwards.
     /\ index >= commitPoint[1]
-    \* TODO: other preconditions on valid commit point advancement.
+    \* The commit point cannot move to a sibling branch. It can either advance on
+    \* this branch or advance to some child of this branch.
+    /\ \/ \E i \in DOMAIN branch.log : branch.log[i][1] = index /\ branch.log[i][2] = term
+       \/ \E c \in branch.children : c = <<index, term>>
+    \* TODO: other preconditions on valid commit point advancement (?).
     /\ commitPoint' = <<index, term>>
     /\ UNCHANGED logTree
 
@@ -89,20 +90,45 @@ Init ==
     /\ logTree = {}
     /\ commitPoint = <<-1,-1>>
 
+CreateBranchAction == \E parent \in logTree, nt \in Term, v \in Value : CreateBranch(parent, nt, v)
+
 Next == 
     \/ \E nt \in Term, v \in Value : InitBranch(nt, v)
-    \/ \E parent \in logTree, nt \in Term, v \in Value : CreateBranch(parent, nt, v)
-    \/ \E branch \in logTree, t \in Term, v \in Value : ExtendBranch(branch, t, v)
+    \/ CreateBranchAction
+    \/ \E branch \in logTree, v \in Value : ExtendBranch(branch, v)
     \/ \E branch \in logTree : \E i \in DOMAIN branch.log : AdvanceCommitPoint(branch, branch.log[i][1], branch.log[i][2])
 
 Spec == Init /\ [][Next]_vars
 
+\* 
+\* Some invariants of the log tree.
+\* 
 
 \* At any branch point, the children on all branches should have distinct terms.
 BranchTermInv == 
-    \A e \in logTree : \A ci,cj \in e.children : ci[2] = cj[2] => ci = cj
+    \A e \in logTree : \A ci,cj \in e.children : (ci[2] = cj[2]) => ci = cj
 
+\* Paths through the log tree should increase monotonically in terms.
+AllPathsMonotonic == 
+    /\ \A e \in logTree : 
+        /\ \A i,j \in DOMAIN e.log : j > i => e.log[i][2] >= e.log[j][2]
+        /\ \A c \in e.children : c[2] >= e.log[Len(e.log)][2]
 
+\* For any two sibling entries (i.e. neither is a descendant of the other)
+\* they cannot have the same terms.
+\* TODO: This may not hold yet in the above model.
+DirectSiblingsHaveDistinctTerms == 
+    \A branch,cbranchi,cbranchj \in logTree : 
+        ( /\ cbranchi # cbranchj
+          /\ <<cbranchi.log[1][1],cbranchi.log[1][2]>> \in branch.children
+          /\ <<cbranchj.log[1][1],cbranchj.log[1][2]>> \in branch.children) =>
+            \A i \in DOMAIN cbranchi.log :
+            \A j \in DOMAIN cbranchj.log :
+                \* Terms must differ.
+                cbranchi.log[i][2] # cbranchj.log[j][2]
+    
+
+\* Model checking constraint.
 StateConstraint == 
     /\ Cardinality(logTree) <= 3
     /\ \A e \in logTree : Len(e.log) <= 2
