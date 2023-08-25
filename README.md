@@ -1,3 +1,3 @@
-# Refinement in TLA+
+# Refinement-based specifications of Raft
 
-Exploring refinement in TLA+ by examining specifications of Raft consensus and log replication.
+Exploring refinement-based specifications of Raft consensus and log replication.
