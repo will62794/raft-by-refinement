@@ -51,7 +51,7 @@ CreateBranch(parent, newTerm, v) ==
     \* You cannot create a branch that starts in the same term as the starting term
     \* of one of your other child branches.
     /\ ~\E c \in parent.children : c[2] = newTerm
-    \* New branches can only created in terms newer than the parent branch.
+    \* New branches can only be created in terms newer than the parent branch.
     /\ newTerm > parent.log[Len(parent.log)][2]
     \* Append the start of the new branch to the tree.
     /\ (logTree' = (logTree \ {parent}) \cup {
