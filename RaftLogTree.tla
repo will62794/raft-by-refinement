@@ -2,8 +2,12 @@
 EXTENDS Naturals, Integers, FiniteSets, Sequences, TLC
 
 \* 
-\* Lower level model of Raft that represents the global system as a single log "tree", 
-\* thus incorporating notions of concurrent terms, divergent branches of log history, and log rollbacks.
+\* Abstract model of Raft that represents the global system as a single log "tree".
+\* This allows for representing the notions of concurrent terms, divergent branches of 
+\* log history, and rollbacks of "stale"/uncommitted branches of history.
+\* 
+\* It is not, however, concerned with how such a log tree is implemented in a 
+\* lower level (i.e. message passing) distributed system.
 \* 
 
 \* The set of all possible values.
@@ -47,6 +51,8 @@ CreateBranch(parent, newTerm, v) ==
     \* You cannot create a branch that starts in the same term as the starting term
     \* of one of your other child branches.
     /\ ~\E c \in parent.children : c[2] = newTerm
+    \* New branches can only created in terms newer than the parent branch.
+    /\ newTerm > parent.log[Len(parent.log)][2]
     \* Append the start of the new branch to the tree.
     /\ (logTree' = (logTree \ {parent}) \cup {
             \* Add the new branch.
