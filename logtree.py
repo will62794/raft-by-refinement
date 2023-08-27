@@ -3,7 +3,7 @@ import graphviz
 import os
 
 # Generate trace with TLC.
-os.system("java -cp lib/tla2tools-v1.8.jar tlc2.TLC -noGenerateSpecTE -dumpTrace json trace.json MCRaftLogTree")
+# os.system("java -cp lib/tla2tools-v1.8.jar tlc2.TLC -noGenerateSpecTE -dumpTrace json trace.json MCRaftLogTree")
 
 # Parse JSON trace.
 f = open("trace.json")
@@ -12,8 +12,8 @@ f.close()
 trace = json.loads(trace_json_str)
 # print(trace)
 last_state = trace["trace"][-1]
-print(last_state)
-print(last_state["logTree"])
+# print(last_state)
+# print(last_state["logTree"])
 # print(last_state["treeEdges"])
 
 G = graphviz.Digraph()
