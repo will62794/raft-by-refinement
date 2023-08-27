@@ -4,3 +4,4 @@ states/
 .DS_Store
 .vscode/
 test.cfg
+*.json
