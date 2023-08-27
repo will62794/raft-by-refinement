@@ -20,7 +20,8 @@ Init == log = <<>>
 
 Next == 
     \E t \in Term, v \in Value : 
-        /\ t >= log[Len(log)][1]
+        /\ \/ log = <<>>
+           \/ log # <<>> /\ t >= log[Len(log)][1]
         /\ log' = Append(log, <<t, v>>)
 
 Spec == Init /\ [][Next]_vars

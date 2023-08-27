@@ -127,6 +127,17 @@ DirectSiblingsHaveDistinctTerms ==
                 \* Terms must differ.
                 cbranchi.log[i][2] # cbranchj.log[j][2]
     
+\* Is branch b1 a parent of bj.
+Parent(bi,bj) == <<bj.log[1][1],bj.log[1][2]>> \in bi.children
+
+\* Check that the tree is actually a valid tree.
+TreeInv == 
+    \A b \in logTree :
+        \* Each branch has a parent.
+        /\ \E par \in logTree : Parent(par, b)
+        \* Parents are unique.
+        /\ \A par1,par2 \in logTree : 
+            (Parent(par1, b) /\ Parent(par2, b)) => par1 = par2
 
 \* Model checking constraint.
 StateConstraint == 
