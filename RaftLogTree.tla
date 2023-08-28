@@ -49,12 +49,13 @@ InitBranch(newTerm, v) ==
 \* Create a new branch in term 'newTerm', starting from
 \* the log section that ends at <<index, term>>.
 CreateBranch(parent, newTerm, v) == 
-    \* You cannot create a branch that would start in the same term as 
-    \* a sibling branch.
-    \* TODO: May need to enforce this at more global level.
-    /\ ~\E s \in parent.children : (s[2] = newTerm)
     \* New branches can only be created in terms newer than the parent branch.
     /\ newTerm > parent.entry[2]
+    \* You cannot create a branch that would start in the same term as a sibling
+    \* branch. When we create a new branch, we start it in a newer term than the
+    \* current branch, so to enforce this it is sufficient to require that the
+    \* new term is also distinct from any existing term in the tree.
+    /\ ~\E s \in logTree : s.entry[2] = newTerm
     \* Append the start of the new branch to the tree.
     /\ (logTree' = 
         (logTree \ {parent}) \cup {
@@ -165,6 +166,8 @@ TreeInv == (logTree # {}) => NonEmptyTreeInv
 \* Model checking constraint.
 \* 
 StateConstraint == 
-    /\ Cardinality(logTree) <= 5
+    /\ Cardinality(logTree) <= 6
+
+Check == Cardinality(logTree) < 5
 
 ===============================================================================
