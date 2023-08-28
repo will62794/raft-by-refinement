@@ -68,4 +68,4 @@ for edge in last_state["logTree"]:
     #     dest = tuple(c)
     #     G.edge(str(src), str(dest))
 
-G.render("log_tree")
+G.render("logtree")

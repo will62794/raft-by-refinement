@@ -1,0 +1,13 @@
+digraph {
+	"(1, 0)" [shape=rect]
+	"(2, 0)" [shape=rect]
+	"(1, 0)" -> "(2, 0)"
+	"(2, 3)" [shape=rect]
+	"(1, 0)" -> "(2, 3)"
+	"(3, 0)" [shape=rect]
+	"(2, 0)" -> "(3, 0)"
+	"(3, 3)" [shape=rect]
+	"(2, 3)" -> "(3, 3)"
+	"(4, 3)" [fillcolor=lightgreen shape=rect style=filled]
+	"(3, 3)" -> "(4, 3)"
+}
