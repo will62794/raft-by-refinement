@@ -365,9 +365,9 @@ H_CommittedEntryExistsOnQuorum_AND_LogsLaterThanCommittedMustHaveCommitted_AND_L
     /\ H_CommittedEntryExistsOnQuorum
     /\ H_LogsLaterThanCommittedMustHaveCommitted
 
-\* Invariant developed during inductive proof decomposition experimenting.
-\* 08/19/2023
-HumanDecompInd == 
+\* Human developed inductive invariant that is expected to be correct.
+HumanInd == 
+    /\ TypeOK
     /\ StateMachineSafety
     /\ LeaderCompleteness
     /\ H_CommittedEntryExistsOnQuorum
@@ -382,11 +382,5 @@ HumanDecompInd ==
     /\ H_TermsOfEntriesGrowMonotonically
     /\ LogMatching
     /\ H_UniformLogEntriesInTerm
-
-HumanDecompIndWithTypeOK ==
-    /\ TypeOK
-    /\ HumanDecompInd   
-
-HumanDecompInd_WithConstraint == StateConstraint => HumanDecompInd
 
 =============================================================================
