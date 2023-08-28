@@ -2,8 +2,8 @@
 EXTENDS Naturals, FiniteSets, Sequences, TLC
 
 \* 
-\* Highest level abstract model of Raft that views the whole system as a single global, append-only log.
-\* of committed/durable entries.
+\* Highest level abstract model of Raft that views the whole system as a single
+\* global, append-only log of committed/durable entries.
 \* 
 
 CONSTANT Value
@@ -20,7 +20,7 @@ Init == log = <<>>
 
 Next == 
     \E t \in Term, v \in Value : 
-        /\ \/ log = <<>>
+        /\ \/ log = <<>> \* for log initialization.
            \/ log # <<>> /\ t >= log[Len(log)][1]
         /\ log' = Append(log, <<t, v>>)
 

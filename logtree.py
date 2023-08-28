@@ -19,6 +19,8 @@ last_state = trace["trace"][-1]
 G = graphviz.Digraph()
 
 nodes = set()
+commit_point = tuple(last_state["commitPoint"])
+print(commit_point)
 for edge in last_state["logTree"]:
     src = edge["entry"]
     children = edge["children"]
@@ -29,13 +31,27 @@ for edge in last_state["logTree"]:
         tn = tuple(to)[:2]
         # if edge["child"] == "None":
             # tn = "None"
+            
         print(sn)
         print(tn)
+        print("commit:", commit_point)
+        print("sn:", sn)
+        print("tn:", tn)
+
+        node_style = {"shape": "rect"}
         if sn not in nodes:
-            G.node(str(sn))
+            if sn == commit_point:
+                node_style["style"] = "filled"
+                node_style["fillcolor"] = "lightgreen"
+            G.node(str(sn), **node_style)
             nodes.add(sn)
+        
+        node_style = {"shape": "rect"}
         if tn not in nodes:
-            G.node(str(tn))
+            if tn == commit_point:
+                node_style["style"] = "filled"
+                node_style["fillcolor"] = "lightgreen"
+            G.node(str(tn), **node_style)
             nodes.add(tn)
         G.edge(str(sn),str(tn))
 
