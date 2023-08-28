@@ -53,6 +53,12 @@ CreateBranch(parent, newTerm, v) ==
     \* a unique "leader", even though the leader concept is not explicitly represented
     \* at this level of abstraction.
     /\ ~\E s \in logTree : s.entry[2] >= newTerm
+    \* If you create a new branch in a new term, it must start from
+    \* the commit point or some descendant of the commit point. That is,
+    \* the new branch must contain all committed entries in the point it starts
+    \* from.
+    \* (TODO: This is an approximation of the required behavior. Need notion of 'descendant' in order to specify this fully.)
+    /\ parent.entry[1] >= commitPoint[1]
     \* Append the start of the new branch to the tree.
     /\ (logTree' = 
         (logTree \ {parent}) \cup {
@@ -157,7 +163,13 @@ BranchesHaveDistinctTerms == TRUE
 StateConstraint == 
     /\ Cardinality(logTree) <= 6
 
-Check == ~(Cardinality(logTree) >= 5 /\ commitPoint[1] > 0)
+Check == ~(
+    /\ Cardinality(logTree) >= 5 
+    /\ commitPoint[1] > 2
+    /\ \E ea,eb \in logTree : 
+        /\ ea # eb
+        /\ Cardinality(ea.children) > 2
+        /\ Cardinality(eb.children) > 1)
 \* Check == commitPoint[1] < 0
 
 ===============================================================================
