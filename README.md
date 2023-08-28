@@ -8,7 +8,7 @@ Experimental refinement-based specifications of Raft consensus, with the followi
 
 ## Visualizing Raft Log Trees
 
-If you set up the `RaftLogTree.cfg` config to check an invariant that is expected to fail, you can visualize the resulting Raft log tree structure in the final trace of the error trace with the following commands:
+If you set up the `RaftLogTree.cfg` config to check an invariant that is expected to fail, you can visualize the resulting Raft log tree structure in the final state of the error trace with the following commands:
 ```bash
 $ java -cp lib/tla2tools.jar tlc2.TLC -noGenerateSpecTE -dumpTrace json trace.json -simulate RaftLogTree
 $ python3 logtree.py # will output rendered log tree to 'logtree.pdf'.
