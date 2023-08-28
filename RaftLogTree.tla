@@ -49,7 +49,7 @@ CreateBranch(parent, newTerm, v) ==
     /\ ~\E s \in logTree : s.entry[2] = newTerm
     \* It is also invalid to create a new branch in a term T if
     \* there is already some other branch that contains an entry in a term > T.
-    \* This upheld since log branches in a given term are always managed by 
+    \* This is upheld since log branches in a given term are always managed by 
     \* a unique "leader", even though the leader concept is not explicitly represented
     \* at this level of abstraction.
     /\ ~\E s \in logTree : s.entry[2] >= newTerm
