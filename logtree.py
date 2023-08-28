@@ -18,24 +18,38 @@ last_state = trace["trace"][-1]
 
 G = graphviz.Digraph()
 
-for b in last_state["logTree"]:
-    # All nodes.
-    for entry in b["log"]:
-        # print(entry)
-        n = tuple(entry[:2])
-        G.node(str(n))
+nodes = set()
+for edge in last_state["logTree"]:
+    src = edge["entry"]
+    children = edge["children"]
+    for to in children:
+
+        print(src, to)
+        sn = tuple(src)[:2]
+        tn = tuple(to)[:2]
+        # if edge["child"] == "None":
+            # tn = "None"
+        print(sn)
+        print(tn)
+        if sn not in nodes:
+            G.node(str(sn))
+            nodes.add(sn)
+        if tn not in nodes:
+            G.node(str(tn))
+            nodes.add(tn)
+        G.edge(str(sn),str(tn))
 
     # Intra log edges.
-    for ind,entry in enumerate(b["log"][:-1]):
-        src = tuple(entry[:2])
-        dest = tuple(b["log"][ind+1][:2])
-        G.edge(str(src), str(dest))
+    # for ind,entry in enumerate(b["log"][:-1]):
+    #     src = tuple(entry[:2])
+    #     dest = tuple(b["log"][ind+1][:2])
+    #     G.edge(str(src), str(dest))
 
     # Log to children edges.
-    for c in b["children"]:
-        # last entry in this log.
-        src = tuple(b["log"][-1][:2])
-        dest = tuple(c)
-        G.edge(str(src), str(dest))
+    # for c in b["children"]:
+    #     # last entry in this log.
+    #     src = tuple(b["log"][-1][:2])
+    #     dest = tuple(c)
+    #     G.edge(str(src), str(dest))
 
 G.render("log_tree")

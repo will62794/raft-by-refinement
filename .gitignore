@@ -5,3 +5,4 @@ states/
 .vscode/
 test.cfg
 *.json
+log_tree*
